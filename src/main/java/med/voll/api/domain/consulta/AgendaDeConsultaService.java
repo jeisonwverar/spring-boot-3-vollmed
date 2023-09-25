@@ -25,6 +25,8 @@ public class AgendaDeConsultaService {
 
             throw new ValidacionDeIntegridad("este id ni fue encontrado");
         }
+        //validaciones
+
         var paciente=pacienteRepository.findById(datos.idPaciente()).get();
 
         var medico =seleccionarMedico(datos);
