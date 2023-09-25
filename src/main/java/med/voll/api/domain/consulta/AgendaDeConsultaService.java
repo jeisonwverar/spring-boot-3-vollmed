@@ -1,5 +1,7 @@
 package med.voll.api.domain.consulta;
 
+import med.voll.api.domain.consulta.validaciones.HorarioDeAnticipacion;
+import med.voll.api.domain.consulta.validaciones.ValIdadorDeConsultas;
 import med.voll.api.domain.medico.Medico;
 import med.voll.api.domain.medico.MedicoRepository;
 import med.voll.api.domain.paciente.Paciente;
@@ -9,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class AgendaDeConsultaService {
     @Autowired
@@ -17,21 +21,32 @@ public class AgendaDeConsultaService {
     private MedicoRepository medicoRepository;
     @Autowired
     private ConsultaRepository consultaRepository;
-    public void agendar(DatosAgendarConsulta datos){
-        if(pacienteRepository.findById(datos.idPaciente()).isPresent()){
+    @Autowired
+    List<ValIdadorDeConsultas> validadores;
+
+    public DatosDetalleConsulta agendar(DatosAgendarConsulta datos){
+        if(!pacienteRepository.findById(datos.idPaciente()).isPresent()){
             throw new ValidacionDeIntegridad("este id para el paciente no fue encontrado");
         }
-        if(datos.idMedico()!=null&&medicoRepository.existsById(datos.idMedico())){
+        if(datos.idMedico()!=null&& !medicoRepository.existsById(datos.idMedico())){
 
             throw new ValidacionDeIntegridad("este id ni fue encontrado");
         }
-        //validaciones
+
+        validadores.forEach(v-> v.validar(datos));
 
         var paciente=pacienteRepository.findById(datos.idPaciente()).get();
 
         var medico =seleccionarMedico(datos);
+        if(medico==null){
+            throw new ValidacionDeIntegridad("No existen medicos disponible para este horario");
+        }
+
         var consulta = new Consulta(null,paciente,medico,datos.fecha());
         consultaRepository.save(consulta);
+
+
+        return new DatosDetalleConsulta(consulta);
 
 
     }
@@ -46,6 +61,6 @@ public class AgendaDeConsultaService {
             throw new ValidacionDeIntegridad("debe seleccionar una especialidad");
         }
 
-        return medicoRepository.seleccionarMedicoConEspecialidadFecha(datos.especialidad(),datos.fecha());
+        return medicoRepository.seleccionarMedicoConEspecialidadEnFecha(datos.especialidad(),datos.fecha());
     }
 }
