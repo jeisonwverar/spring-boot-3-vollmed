@@ -16,13 +16,17 @@ import org.springframework.web.bind.annotation.*;
 @ResponseBody
 @RequestMapping("/consultas")
 @SecurityRequirement(name = "bearer-key")
-
+@SuppressWarnings("all")
 public class ConsultaController {
     @Autowired
     private AgendaDeConsultaService service;
 
     @PostMapping
     @Transactional
+    @Operation(
+            summary = "registra una consulta en la base de datos",
+            description = "",
+            tags = { "consulta", "post" })
     public ResponseEntity agendar(@RequestBody @Valid DatosAgendarConsulta datosAgendarConsulta)throws ValidacionDeIntegridad {
 
 
